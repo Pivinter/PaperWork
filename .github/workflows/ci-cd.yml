@@ -212,7 +212,7 @@ jobs:
 
       - name: Create deployment summary
         run: |
-          echo "## 🚀 Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "## Deployment Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- **Backend Image**: \`${{ secrets.DOCKER_USERNAME }}/task-management-backend:${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
           echo "- **Frontend Image**: \`${{ secrets.DOCKER_USERNAME }}/task-management-frontend:${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
@@ -229,7 +229,7 @@ jobs:
     steps:
       - name: Check build status
         run: |
-          echo "## 📊 Build Status" >> $GITHUB_STEP_SUMMARY
+          echo "## Build Status" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- Backend Build: ${{ needs.backend-build.result }}" >> $GITHUB_STEP_SUMMARY
           echo "- Frontend Build: ${{ needs.frontend-build.result }}" >> $GITHUB_STEP_SUMMARY
