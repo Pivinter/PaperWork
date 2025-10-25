@@ -1,5 +1,4 @@
 services:
-  # PostgreSQL Database
   database:
     image: postgres:15-alpine
     container_name: task-system-db
@@ -20,7 +19,6 @@ services:
       retries: 5
     restart: unless-stopped
 
-  # Backend API (Node.js/Express) - uses Docker Hub image
   backend:
     image: vladyslavkuliavets/task-management-backend:latest
     container_name: task-system-backend
@@ -43,7 +41,6 @@ services:
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
 
-  # Frontend (VueJS) - uses Docker Hub image
   frontend:
     image: vladyslavkuliavets/task-management-frontend:latest
     container_name: task-system-frontend
@@ -59,18 +56,17 @@ services:
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
 
-  # Watchtower - автоматично оновлює контейнери
   watchtower:
     image: containrrr/watchtower
     container_name: task-system-watchtower
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
-      - WATCHTOWER_POLL_INTERVAL=60  # Перевіряти кожні 60 секунд
-      - WATCHTOWER_CLEANUP=true      # Видаляти старі образи
+      - WATCHTOWER_POLL_INTERVAL=60  
+      - WATCHTOWER_CLEANUP=true      
       - WATCHTOWER_INCLUDE_STOPPED=false
-      - WATCHTOWER_LABEL_ENABLE=true # Оновлювати тільки з label
-      - WATCHTOWER_DEBUG=true        # Debug логи
+      - WATCHTOWER_LABEL_ENABLE=true 
+      - WATCHTOWER_DEBUG=true        
     networks:
       - task-network
     restart: unless-stopped
