@@ -8,7 +8,7 @@ services:
       POSTGRES_PASSWORD: taskpass123
       POSTGRES_DB: taskdb
     ports:
-      - "5433:5432"  # Changed from 5432 to 5433 to avoid conflict with local PostgreSQL
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
@@ -18,12 +18,11 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    restart: unless-stopped
 
-  # Backend API (Node.js/Express)
+  # Backend API (Node.js/Express) - uses Docker Hub image
   backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
+    image: ${DOCKER_USERNAME:-pivinter}/task-management-backend:latest
     container_name: task-system-backend
     environment:
       NODE_ENV: production
@@ -42,11 +41,9 @@ services:
       - task-network
     restart: unless-stopped
 
-  # Frontend (VueJS)
+  # Frontend (VueJS) - uses Docker Hub image
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
+    image: ${DOCKER_USERNAME:-pivinter}/task-management-frontend:latest
     container_name: task-system-frontend
     environment:
       VITE_API_URL: http://localhost:3000

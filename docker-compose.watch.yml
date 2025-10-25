@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   # PostgreSQL Database
   database:
@@ -8,7 +10,7 @@ services:
       POSTGRES_PASSWORD: taskpass123
       POSTGRES_DB: taskdb
     ports:
-      - "5433:5432"  # Changed from 5432 to 5433 to avoid conflict with local PostgreSQL
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
@@ -18,12 +20,11 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    restart: unless-stopped
 
-  # Backend API (Node.js/Express)
+  # Backend API (Node.js/Express) - auto-pull from Docker Hub
   backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
+    image: ${DOCKER_USERNAME:-pivinter}/task-management-backend:latest
     container_name: task-system-backend
     environment:
       NODE_ENV: production
@@ -41,12 +42,18 @@ services:
     networks:
       - task-network
     restart: unless-stopped
+    # Docker Compose Watch - автоматично перезапускає при оновленні образу
+    x-develop:
+      watch:
+        - action: rebuild
+          path: ./backend
+          target: /app
+          ignore:
+            - node_modules/
 
-  # Frontend (VueJS)
+  # Frontend (VueJS) - auto-pull from Docker Hub
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
+    image: ${DOCKER_USERNAME:-pivinter}/task-management-frontend:latest
     container_name: task-system-frontend
     environment:
       VITE_API_URL: http://localhost:3000
@@ -57,6 +64,14 @@ services:
     networks:
       - task-network
     restart: unless-stopped
+    # Docker Compose Watch - автоматично перезапускає при оновленні образу
+    x-develop:
+      watch:
+        - action: rebuild
+          path: ./frontend
+          target: /usr/share/nginx/html
+          ignore:
+            - node_modules/
 
 volumes:
   postgres_data:

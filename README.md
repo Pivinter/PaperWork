@@ -14,6 +14,7 @@
 - [Технологічний стек](#технологічний-стек)
 - [Інструменти CI/CD](#інструменти-cicd)
 - [Встановлення та запуск](#встановлення-та-запуск)
+- [🚀 Автоматичний деплой](#-автоматичний-деплой)
 - [Структура проекту](#структура-проекту)
 - [API Endpoints](#api-endpoints)
 - [CI/CD Pipeline](#cicd-pipeline)
@@ -289,6 +290,112 @@ npm run dev
 ```
 
 Frontend буде доступний на http://localhost:5173
+
+## 🚀 Автоматичний деплой
+
+### Production Deployment Automation
+
+Система автоматично деплоїться на production сервер при кожному push в `main` гілку!
+
+**Процес:**
+```
+Git Push → GitHub Actions → Docker Hub → SSH Deploy → Production Server
+```
+
+### Швидке налаштування (10 хвилин)
+
+#### 1. Генерація SSH ключа
+```bash
+ssh-keygen -t ed25519 -C "github-deploy" -f ~/.ssh/github_deploy
+```
+
+#### 2. Підготовка сервера
+```bash
+# На сервері:
+ssh user@your-server.com
+mkdir -p ~/.ssh && chmod 700 ~/.ssh
+nano ~/.ssh/authorized_keys  # Додати публічний ключ
+chmod 600 ~/.ssh/authorized_keys
+
+# Встановити Docker
+curl -fsSL https://get.docker.com | sh
+sudo usermod -aG docker $USER
+
+# Клонувати проект
+mkdir -p ~/task-management-system
+cd ~/task-management-system
+git clone https://github.com/YOUR_USERNAME/YOUR_REPO.git .
+```
+
+#### 3. GitHub Secrets
+Додати в **Settings → Secrets and variables → Actions**:
+
+| Secret | Опис |
+|--------|------|
+| `SSH_HOST` | IP адреса сервера |
+| `SSH_USER` | SSH користувач |
+| `SSH_PRIVATE_KEY` | Приватний SSH ключ |
+| `SSH_PORT` | SSH порт (22) |
+| `DOCKER_USERNAME` | Docker Hub username |
+| `DOCKER_PASSWORD` | Docker Hub password |
+
+#### 4. Тестування
+```bash
+git commit --allow-empty -m "test: trigger deployment"
+git push origin main
+```
+
+Переглядайте процес на вкладці **Actions** в GitHub! 🎉
+
+### Детальні інструкції
+
+- 📖 **Повна інструкція**: [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md)
+- ⚡ **Швидкий старт**: [DEPLOYMENT_QUICKSTART.md](./DEPLOYMENT_QUICKSTART.md)
+
+### Що відбувається автоматично?
+
+1. ✅ **Build** - збірка Docker образів
+2. ✅ **Test** - запуск тестів
+3. ✅ **Push** - завантаження в Docker Hub
+4. ✅ **Deploy** - SSH підключення до сервера
+5. ✅ **Pull** - стягування нових образів
+6. ✅ **Restart** - перезапуск контейнерів
+7. ✅ **Health Check** - перевірка працездатності
+
+**Результат:** Код на production за 8-10 хвилин без ручного втручання! 🚀
+
+### Локальне автоматичне оновлення
+
+Якщо ви хочете, щоб ваша локальна система також автоматично оновлювалася:
+
+#### Варіант 1: Ручне оновлення (найпростіше)
+```bash
+./update.sh
+```
+
+#### Варіант 2: Автоматичний моніторинг
+```bash
+# Запустити фоновий процес, який кожні 60 секунд перевіряє оновлення
+./auto-update.sh
+
+# Або у фоні з логами
+nohup ./auto-update.sh > auto-update.log 2>&1 &
+tail -f auto-update.log
+```
+
+#### Варіант 3: Systemd сервіс (автозапуск)
+```bash
+# Встановити як системний сервіс
+sudo cp task-auto-update@.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable task-auto-update@$USER.service
+sudo systemctl start task-auto-update@$USER.service
+
+# Переглядати логи
+sudo journalctl -u task-auto-update@$USER.service -f
+```
+
+**Детальна інструкція:** [AUTO_UPDATE_GUIDE.md](./AUTO_UPDATE_GUIDE.md)
 
 ## Структура проекту
 

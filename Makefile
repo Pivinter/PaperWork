@@ -132,3 +132,75 @@ prune: ## Очистити всі невикористовувані Docker ре
 	@echo "$(RED)Очищення Docker системи...$(NC)"
 	docker system prune -af --volumes
 	@echo "$(GREEN)✓ Система очищена$(NC)"
+
+# ===== AUTO-UPDATE COMMANDS =====
+
+update: ## Ручне оновлення з Git та Docker Hub
+	@echo "$(BLUE)🔄 Оновлення системи...$(NC)"
+	./update.sh
+
+auto-update: ## Запустити автоматичний моніторинг оновлень
+	@echo "$(BLUE)🔄 Запуск автоматичного моніторингу...$(NC)"
+	@echo "$(GREEN)Натисніть Ctrl+C для зупинки$(NC)"
+	./auto-update.sh
+
+auto-update-bg: ## Запустити автоматичний моніторинг у фоні
+	@echo "$(BLUE)🔄 Запуск моніторингу у фоні...$(NC)"
+	nohup ./auto-update.sh > auto-update.log 2>&1 &
+	@echo "$(GREEN)✓ Моніторинг запущено у фоні$(NC)"
+	@echo "Логи: tail -f auto-update.log"
+	@echo "Зупинити: make stop-auto-update"
+
+stop-auto-update: ## Зупинити фоновий автоматичний моніторинг
+	@echo "$(BLUE)🛑 Зупинка автоматичного моніторингу...$(NC)"
+	pkill -f auto-update.sh || true
+	@echo "$(GREEN)✓ Моніторинг зупинено$(NC)"
+
+install-service: ## Встановити systemd сервіс для автоматичного оновлення
+	@echo "$(BLUE)📦 Встановлення systemd сервісу...$(NC)"
+	sudo cp task-auto-update@.service /etc/systemd/system/
+	sudo systemctl daemon-reload
+	@echo "$(GREEN)✓ Сервіс встановлено$(NC)"
+	@echo ""
+	@echo "$(BLUE)Наступні кроки:$(NC)"
+	@echo "  $(GREEN)sudo systemctl enable task-auto-update@$$USER.service$(NC)  # Увімкнути автозапуск"
+	@echo "  $(GREEN)sudo systemctl start task-auto-update@$$USER.service$(NC)   # Запустити сервіс"
+	@echo "  $(GREEN)sudo journalctl -u task-auto-update@$$USER.service -f$(NC)  # Переглянути логи"
+
+service-status: ## Показати статус systemd сервісу
+	@sudo systemctl status task-auto-update@$$USER.service || echo "$(RED)Сервіс не встановлено$(NC)"
+
+service-logs: ## Показати логи systemd сервісу
+	@sudo journalctl -u task-auto-update@$$USER.service -f
+
+prod-up: ## Запустити в production режимі (з Docker Hub)
+	@echo "$(BLUE)🚀 Запуск у production режимі...$(NC)"
+	docker compose -f docker-compose.prod.yml up -d
+	@echo "$(GREEN)✓ Production сервіси запущено!$(NC)"
+	@echo "  Frontend: http://localhost:8080"
+	@echo "  Backend:  http://localhost:3000"
+
+prod-down: ## Зупинити production сервіси
+	@echo "$(BLUE)Зупинка production сервісів...$(NC)"
+	docker compose -f docker-compose.prod.yml down
+	@echo "$(GREEN)✓ Production сервіси зупинено$(NC)"
+
+prod-logs: ## Показати логи production
+	docker compose -f docker-compose.prod.yml logs -f
+
+check-updates: ## Перевірити наявність оновлень (без застосування)
+	@echo "$(BLUE)🔍 Перевірка оновлень...$(NC)"
+	@echo ""
+	@echo "$(BLUE)Git Repository:$(NC)"
+	@git fetch origin main --quiet
+	@LOCAL=$$(git rev-parse HEAD); \
+	REMOTE=$$(git rev-parse origin/main); \
+	if [ "$$LOCAL" != "$$REMOTE" ]; then \
+		echo "  $(GREEN)✅ Нові коміти доступні$(NC)"; \
+		git log HEAD..origin/main --oneline | head -5; \
+	else \
+		echo "  $(GREEN)✓ Репозиторій оновлено$(NC)"; \
+	fi
+	@echo ""
+	@echo "$(BLUE)Docker Hub:$(NC)"
+	@docker compose -f docker-compose.prod.yml pull --quiet && echo "  $(GREEN)✓ Перевірено$(NC)" || echo "  $(RED)✗ Помилка$(NC)"
