@@ -40,6 +40,8 @@ services:
     networks:
       - task-network
     restart: unless-stopped
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
 
   # Frontend (VueJS) - uses Docker Hub image
   frontend:
@@ -54,6 +56,25 @@ services:
     networks:
       - task-network
     restart: unless-stopped
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
+  # Watchtower - автоматично оновлює контейнери
+  watchtower:
+    image: containrrr/watchtower
+    container_name: task-system-watchtower
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - WATCHTOWER_POLL_INTERVAL=60  # Перевіряти кожні 60 секунд
+      - WATCHTOWER_CLEANUP=true      # Видаляти старі образи
+      - WATCHTOWER_INCLUDE_STOPPED=false
+      - WATCHTOWER_LABEL_ENABLE=true # Оновлювати тільки з label
+      - WATCHTOWER_DEBUG=true        # Debug логи
+    networks:
+      - task-network
+    restart: unless-stopped
+    command: --interval 60
 
 volumes:
   postgres_data:
