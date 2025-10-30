@@ -2,7 +2,7 @@
   <div id="app" class="app">
     <header class="app-header">
       <div class="container">
-        <h1 class="app-title"> Task Management System 4</h1>
+        <h1 class="app-title"> Task Management System </h1>
         <nav class="app-nav">
           <router-link to="/" class="nav-link">Завдання</router-link>
           <router-link to="/statistics" class="nav-link">Статистика</router-link>
